@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Uniform Inventory Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="admininventory.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="brand">UNISERVE</div>
+    <nav>
+      <a href="admin.html"><span class="material-icons-outlined">dashboard</span>Dashboard</a>
+      <a href="admininventory.html" class="active"><span class="material-icons-outlined">inventory</span>Products</a>
+      <a href="orders.html"><span class="material-icons-outlined">shopping_cart</span>Orders</a>
+      <a href="users.html"><span class="material-icons-outlined">people</span>Users</a>
+      <a href="restock.html"><span class="material-icons-outlined">local_shipping</span>Restock</a>
+
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header><h1>Admin Inventory Dashboard</h1></header>
+    <div class="inventory-panel">
+      <div class="card-container" id="productContainer"></div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const sizeOptions = ['Small', 'Medium', 'Large', 'XL', '2XL / 3XL', '4XL / 5XL'];
+  const lowStockThreshold = 25;
+
+  const priceMatrix = {
+    "Male Insti Top":       { Small: 650, Medium: 650, Large: 700, XL: 700, "2XL / 3XL": 750, "4XL / 5XL": 800 },
+    "Female Insti Top":     { Small: 650, Medium: 650, Large: 700, XL: 700, "2XL / 3XL": 750, "4XL / 5XL": 800 },
+    "Male Insti Pants":     { Small: 650, Medium: 650, Large: 700, XL: 700, "2XL / 3XL": 750, "4XL / 5XL": 800 },
+    "Female Insti Pants":   { Small: 650, Medium: 650, Large: 700, XL: 700, "2XL / 3XL": 750, "4XL / 5XL": 800 },
+    "Female Skirt Uniform":{ Small: 650, Medium: 650, Large: 700, XL: 700, "2XL / 3XL": 750, "4XL / 5XL": 800 },
+    "1st Year PE Top":      { Small: 650, Medium: 650, Large: 700, XL: 700 },
+    "2nd Year PE Top":      { Small: 650, Medium: 650, Large: 700, XL: 700 },
+    "PE Pants":             { Small: 650, Medium: 650, Large: 700, XL: 700 }
+  };
+
+  const products = [
+    { name: "Male Insti Top", image: "M Insti Top.jpg" },
+    { name: "Female Insti Top", image: "F Insti Top.jpg" },
+    { name: "Male Insti Pants", image: "M Insti Pants.jpg" },
+    { name: "Female Insti Pants", image: "F Insti Pants.jpg" },
+    { name: "Female Skirt Uniform", image: "Female Skirt Insti Uniform.jpg" },
+    { name: "1st Year PE Top", image: "1st year PE Top.jpg" },
+    { name: "2nd Year PE Top", image: "2nd PE Top.jpg" },
+    { name: "PE Pants", image: "Pant.jpg" }
+  ];
+
+  async function loadProductStocks() {
+    const container = document.getElementById('productContainer');
+    container.innerHTML = '';
+
+    for (const product of products) {
+      const card = document.createElement('div');
+      card.className = 'size-card';
+
+      card.innerHTML = `
+        <img src="${product.image}" class="product-img" alt="${product.name}">
+        <div class="size-label">${product.name}</div>
+        <div class="price-label" id="price-${product.name}">₱--</div>
+        <select id="size-${product.name}">
+          ${sizeOptions.map(size => `<option value="${size}">${size}</option>`).join('')}
+        </select>
+        <div class="stock-label" id="stock-${product.name}">Loading...</div>
+        <div class="restock-section">
+          <input type="number" id="restock-${product.name}" placeholder="Qty" min="1">
+          <button onclick="restockProduct('${product.name}')">Restock</button>
+        </div>
+      `;
+      container.appendChild(card);
+
+      const sizeSelect = document.getElementById(`size-${product.name}`);
+      sizeSelect.addEventListener('change', () => updateProductDisplay(product.name));
+
+      updateProductDisplay(product.name);
+    }
+  }
+
+  async function updateProductDisplay(productName) {
+    const size = document.getElementById(`size-${productName}`).value;
+    const docId = `${productName}_${size}`;
+    const docRef = doc(db, "productStocks", docId);
+    const snap = await getDoc(docRef);
+
+    const priceEl = document.getElementById(`price-${productName}`);
+    const stockEl = document.getElementById(`stock-${productName}`);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      priceEl.innerHTML = `₱${data.price}`;
+      stockEl.innerHTML = `${data.stock} ${data.stock <= lowStockThreshold ? '<span class="low-stock">(Low Stock)</span>' : ''}`;
+    } else {
+      const defaultPrice = priceMatrix[productName]?.[size] || 650;
+      priceEl.innerHTML = `₱${defaultPrice}`;
+      stockEl.innerHTML = `0 <span class="low-stock">(Low Stock)</span>`;
+    }
+  }
+
+  window.restockProduct = async function (productName) {
+    const size = document.getElementById(`size-${productName}`).value;
+    const qtyInput = document.getElementById(`restock-${productName}`);
+    const qty = parseInt(qtyInput.value);
+    const docId = `${productName}_${size}`;
+    const docRef = doc(db, "productStocks", docId);
+    const snap = await getDoc(docRef);
+
+    const defaultPrice = priceMatrix[productName]?.[size] || 650;
+
+    if (!isNaN(qty) && qty > 0) {
+      if (snap.exists()) {
+        const current = snap.data();
+        await setDoc(docRef, {
+          name: productName,
+          size: size,
+          stock: current.stock + qty,
+          price: current.price
+        });
+      } else {
+        await setDoc(docRef, {
+          name: productName,
+          size: size,
+          stock: qty,
+          price: defaultPrice
+        });
+      }
+      alert(`Restocked ${qty} ${productName} (${size})`);
+      qtyInput.value = '';
+      updateProductDisplay(productName);
+    } else {
+      alert("Enter a valid quantity");
+    }
+  };
+
+  loadProductStocks();
+</script>
+
+</body>
+</html>

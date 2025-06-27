@@ -1,0 +1,329 @@
+* { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+    body { margin: 0; background: #f0f2f5; }
+
+    .dashboard-container {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #8b0000;
+      color: #fff;
+      height: 100vh;
+      padding: 20px 10px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      color: #fff;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+
+    .sidebar nav a:hover,
+    .sidebar nav a.active {
+      background: #530c0c;
+    }
+
+    .sidebar nav a span {
+      margin-right: 10px;
+    }
+
+    .main-content {
+      flex-grow: 1;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to right, #8b0000, #530c0c);
+      color: #fff;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+
+    h1 { margin: 0; }
+    .inventory-panel { margin-top: 20px; }
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .size-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      width: 240px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .product-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .size-label { font-size: 18px; font-weight: bold; text-align: center; }
+    .price-label, .stock-label { margin: 5px 0; }
+    .low-stock { color: red; font-weight: bold; }
+    .status-line { font-size: 14px; margin-bottom: 10px; text-align: center; }
+    .restock-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    input[type="number"], select {
+      padding: 5px;
+      width: 100px;
+    }
+
+    button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      background: #8b0000;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button:hover { background: #aa0000; }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .history-log {
+      margin-top: 20px;
+      background: #eef;
+      padding: 10px;
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .request-list {
+      background: #fffbe6;
+      border-left: 4px solid #ffbb33;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .request-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .request-item button {
+      background: none;
+      color: red;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+    body { margin: 0; background: #f0f2f5; }
+
+    .dashboard-container {
+      display: flex;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #8b0000;
+      color: #fff;
+      height: 100vh;
+      padding: 20px 10px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      color: #fff;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+
+    .sidebar nav a:hover,
+    .sidebar nav a.active {
+      background: #530c0c;
+    }
+
+    .sidebar nav a span {
+      margin-right: 10px;
+    }
+
+    .main-content {
+      flex-grow: 1;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to right, #8b0000, #530c0c);
+      color: #fff;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+
+    h1 { margin: 0; }
+    .inventory-panel { margin-top: 20px; }
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .size-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      width: 240px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .product-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .size-label { font-size: 18px; font-weight: bold; text-align: center; }
+    .price-label, .stock-label { margin: 5px 0; }
+    .low-stock { color: red; font-weight: bold; }
+    .status-line { font-size: 14px; margin-bottom: 10px; text-align: center; }
+    .restock-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    input[type="number"], select {
+      padding: 5px;
+      width: 100px;
+    }
+
+    button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      background: #8b0000;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button:hover { background: #aa0000; }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .history-log {
+      margin-top: 20px;
+      background: #eef;
+      padding: 10px;
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .request-list {
+      background: #fffbe6;
+      border-left: 4px solid #ffbb33;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .request-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .request-item button {
+      background: none;
+      color: red;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .status-pending {
+  color: orange;
+  font-weight: bold;
+}
+
+.status-complete {
+  color: green;
+  font-weight: bold;
+}
+
+.receive-btn {
+  padding: 5px 10px;
+  background-color: #2ecc71;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.receive-btn:hover {
+  background-color: #27ae60;
+}

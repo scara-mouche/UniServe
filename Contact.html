@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us - UniServe</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f8f8;
+    }
+
+    header {
+      background-color: #8b0000;
+      color: white;
+      padding: 30px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      background-color: white;
+      color: #8b0000;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #8b0000;
+      font-size: 35px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-left: 5px;
+    }
+
+    p {
+      margin-bottom: 15px;
+      padding-left: 5px;
+    }
+
+    form input, form textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+
+    form button {
+      background-color: #8b0000;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #a30000;
+    }
+
+    iframe {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UNISERVE PORTAL</title>
+  <link rel="stylesheet" href="student.css" /><!DOCTYPE html>
+<html lang="en">
+  <header>
+    <nav class="navbar">
+  <ul class="nav-links">
+    <li><a href="student.html">Home</a></li>
+    <li><a href="AboutUs.html">About Us</a></li>
+    <li><a href="Contact.html">Contact Us</a></li>
+    <li><a href="studentprofile.html">My Account</a></li>
+    <li><a href="index.html">Logout</a></li>
+  </ul>
+  </header>
+
+  <div class="container">
+    <h2>Contact Us</h2>
+
+    <p>📧 <strong>Email:</strong> 
+      <a href="mailto:support@earist-uniserve.com">support@earist-uniserve.com</a>
+    </p>
+
+    <p>🏫 <strong>Pick-up & Support Location:</strong><br>
+      EARIST Main Campus<br>
+      Nagtahan Street, Manila
+    </p>
+
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.333778128018!2d120.99606631535044!3d14.598406681409262!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c9fbef1061c9%3A0x59c196e5d15f4601!2sEulogio%20%22Amang%22%20Rodriguez%20Institute%20of%20Science%20and%20Technology%20(EARIST)!5e0!3m2!1sen!2sph!4v1629871283445!5m2!1sen!2sph" 
+      height="250" 
+      allowfullscreen="" 
+      loading="lazy" 
+      referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+
+    <p>🛠 <strong>Developed by:</strong><br>
+      BS Information Technology Students<br>
+      Eulogio "Amang" Rodriguez Institute of Science and Technology (EARIST) – Manila
+    </p>
+
+    <h2>📬 Send Us a Message</h2>
+    <form onsubmit="submitContactForm(event)">
+      <input type="text" name="name" placeholder="Full Name" required>
+      <input type="email" name="email" placeholder="Email Address" required>
+      <textarea name="message" rows="5" placeholder="Your message..." required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = "student.html"; // Change to your homepage
+    }
+
+    function submitContactForm(e) {
+      e.preventDefault();
+      alert("Message sent! Thank you.");
+      e.target.reset(); // clear form
+    }
+  </script>
+
+</body>
+</html>
