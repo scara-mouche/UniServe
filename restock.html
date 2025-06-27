@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Restock Request</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init({ publicKey: "vNz6GX3t5mclejCF1" });
+    })();
+  </script>
+
+  <link rel="stylesheet" href="restock.css">
+</head>
+<body>
+  <div class="home-button">
+    <a href="admin.html" title="Back to Admin">🏠</a>
+  </div>
+
+  <h1>📦 Request Restock</h1>
+
+  <!-- Restock Form -->
+  <form id="restock-form">
+    <label>Item Name:
+      <input type="text" name="itemName" required />
+    </label>
+    <label>Size:
+      <select name="itemSize" required>
+        <option value="Small">Small</option>
+        <option value="Medium">Medium</option>
+        <option value="Large">Large</option>
+        <option value="XL">XL</option>
+        <option value="2XL / 3XL">2XL / 3XL</option>
+        <option value="4XL / 5XL">4XL / 5XL</option>
+      </select>
+    </label>
+    <label>Quantity to Request:
+      <input type="number" name="quantity" required />
+    </label>
+    <button type="submit">📧 Send Request</button>
+  </form>
+
+  <div id="msg" class="success"></div>
+
+  <h2>📋 Pending Restock Requests</h2>
+  <div id="restock-requests"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const supplierEmail = "francisromero926@gmail.com";
+
+    document.getElementById('restock-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const itemName = form.itemName.value.trim();
+      const size = form.itemSize.value;
+      const quantity = parseInt(form.quantity.value);
+      const orderId = "REQ-" + Math.floor(100000 + Math.random() * 900000);
+
+      if (!itemName || !size || !quantity) {
+        alert("⚠️ All fields are required.");
+        return;
+      }
+
+      try {
+        await db.collection("restockRequests").add({
+          itemName,
+          size,
+          requestedQty: quantity,
+          receivedQty: 0,
+          status: "Pending",
+          requestDate: firebase.firestore.Timestamp.now(),
+          supplierEmail
+        });
+
+        await emailjs.send("service_l1z2ukn", "template_o8onucn", {
+          order_id: orderId,
+          orders: `${itemName} (${size})`,
+          name: "UNISERVE ADMIN",
+          units: quantity,
+          price: 0,
+          shipping: 0,
+          tax: 0,
+          email: supplierEmail
+        });
+
+        document.getElementById("msg").textContent = "✅ Restock request submitted and email sent!";
+        form.reset();
+        fetchRequests();
+      } catch (error) {
+        console.error("❌", error);
+        alert("⚠️ Error during request or email.");
+      }
+    });
+
+    async function fetchRequests() {
+      const container = document.getElementById("restock-requests");
+      container.innerHTML = "";
+      const snapshot = await db.collection("restockRequests").where("status", "==", "Pending").get();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "restock-card";
+        div.innerHTML = `
+          <h3>🧾 ${data.itemName} (${data.size})</h3>
+          <p><strong>Requested:</strong> ${data.requestedQty}</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+          <button onclick="markReceived('${doc.id}', '${data.itemName}', '${data.size}', ${data.requestedQty})">📥 Mark as Received</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function markReceived(requestId, itemName, size, qtyToAdd) {
+      try {
+        const docId = `${itemName}_${size}`;
+        const productRef = db.collection("productStocks").doc(docId);
+        const snap = await productRef.get();
+
+        if (snap.exists) {
+          const data = snap.data();
+          const updatedStock = (data.stock || 0) + qtyToAdd;
+          await productRef.set({ ...data, stock: updatedStock }, { merge: true });
+        } else {
+          // Default price fallback
+          const defaultPrice = 650;
+          await productRef.set({
+            name: itemName,
+            size: size,
+            stock: qtyToAdd,
+            price: defaultPrice
+          });
+        }
+
+        await db.collection("restockRequests").doc(requestId).update({
+          status: "Received",
+          receivedQty: qtyToAdd
+        });
+
+        alert("✅ Stock updated. Marked as received.");
+        fetchRequests();
+      } catch (err) {
+        console.error("❌ Failed to update stock:", err);
+        alert("⚠️ Error updating stock.");
+      }
+    }
+
+    fetchRequests();
+  </script>
+</body>
+</html>

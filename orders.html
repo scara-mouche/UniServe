@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - Orders & Feedback</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f8f8f8;
+    }
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background: darkred;
+      color: #fff;
+      padding: 1rem;
+    }
+    .sidebar .brand {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 0.5rem;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active {
+      background-color: #a00000;
+    }
+    .sidebar nav a span {
+      margin-right: 10px;
+    }
+    .main-content {
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab.active {
+      background: #800000;
+      color: white;
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .order-header {
+      cursor: pointer;
+      background: #f5f5f5;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+    }
+    .order-details {
+      display: none;
+      padding: 10px 20px;
+      background: #fff;
+      border-left: 3px solid #800000;
+      margin-bottom: 10px;
+    }
+    .order-details.active {
+      display: block;
+    }
+    .mark-btn, .resolve-btn {
+      background: #800000;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .mark-btn:hover, .resolve-btn:hover {
+      background: #a00000;
+    }
+    .new-badge {
+      background: red;
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 12px;
+      margin-left: 6px;
+    }
+    .feedback-card {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-left: 5px solid #990000;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .feedback-card p {
+      margin: 5px 0;
+    }
+    .feedback-type {
+      font-weight: bold;
+    }
+  </style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const ordersList = document.getElementById("orders-list");
+    const searchInput = document.getElementById("orderSearch");
+    const feedbackList = document.getElementById("feedbackList");
+    const badge = document.getElementById("feedback-badge");
+    let latestTimestamp = 0;
+
+    const renderOrders = (orders) => {
+      ordersList.innerHTML = "";
+      orders.forEach((docSnap) => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const orderTime = data.date?.seconds || 0;
+        if (orderTime > latestTimestamp) {
+          document.getElementById("newOrderSound").play();
+          latestTimestamp = orderTime;
+        }
+
+        const container = document.createElement("div");
+        const header = document.createElement("div");
+        header.classList.add("order-header");
+        header.innerHTML = `<strong>${data.receiptId}</strong> - ${data.studentName}${data.status !== 'Completed' ? '<span class="new-badge">New</span>' : ''}`;
+
+        const details = document.createElement("div");
+        details.classList.add("order-details");
+        details.innerHTML = `
+          <p><strong>Student:</strong> ${data.studentName} (${data.studentId})</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+          <p><strong>Payment:</strong> ${data.paymentMethod}</p>
+          <p><strong>Total:</strong> ₱${data.total}</p>
+          <p><strong>Checkout:</strong> ${data.date.toDate().toLocaleDateString()}</p>
+          <p><strong>Pickup:</strong> ${data.pickupDate.toDate().toLocaleDateString()}</p>
+          <p><strong>Instructions:</strong> ${data.instructions || "None"}</p>
+          <h4>Items:</h4>
+          <ul>${data.items.map(item => `<li>${item.name} (${item.size}) x${item.qty} = ₱${item.price * item.qty}</li>`).join("")}</ul>
+          ${data.status !== 'Completed' ? `<button class="mark-btn" data-id="${id}">Mark as Completed</button>` : ''}
+        `;
+
+        header.addEventListener("click", () => {
+          details.classList.toggle("active");
+        });
+
+        container.appendChild(header);
+        container.appendChild(details);
+        ordersList.appendChild(container);
+      });
+    };
+
+    const q = query(collection(db, "checkouts"), orderBy("date", "desc"));
+    onSnapshot(q, (snapshot) => {
+      renderOrders(snapshot.docs);
+    });
+
+    document.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("mark-btn")) {
+        const id = e.target.dataset.id;
+        await updateDoc(doc(db, "checkouts", id), { status: "Completed" });
+        alert("✅ Order marked as completed.");
+      }
+      if (e.target.classList.contains("resolve-btn")) {
+        const id = e.target.dataset.id;
+        await updateDoc(doc(db, "feedbacks", id), { notifyAdmin: false });
+        loadFeedbacks();
+      }
+    });
+
+    async function loadFeedbacks() {
+      const snapshot = await getDocs(query(collection(db, "feedbacks"), orderBy("date", "desc")));
+      let unresolved = 0;
+      feedbackList.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        if (data.notifyAdmin) unresolved++;
+        const dateStr = data.date?.toDate().toLocaleString("en-PH") || "N/A";
+        const card = document.createElement("div");
+        card.className = "feedback-card";
+        card.innerHTML = `
+          <p><span class="feedback-type">Feedback:</span> ${data.feedbackType}</p>
+          <p><strong>Receipt ID:</strong> ${data.receiptId}</p>
+          <p><strong>Student ID:</strong> ${data.studentId}</p>
+          <p><strong>Name:</strong> ${data.studentName}</p>
+          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Notify Admin:</strong> ${data.notifyAdmin ? "✅ Yes" : "❌ No"}</p>
+          ${data.notifyAdmin ? `<button class="resolve-btn" data-id="${id}">Mark as Resolved</button>` : ""}
+        `;
+        feedbackList.appendChild(card);
+      });
+      badge.textContent = unresolved;
+      badge.style.display = unresolved > 0 ? "inline-block" : "none";
+    }
+
+    window.onload = () => {
+      loadFeedbacks();
+      switchTab("orders");
+    };
+
+    window.switchTab = (tab) => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.getElementById(tab + "-tab").classList.add("active");
+      document.getElementById(tab + "-section").classList.add("active");
+    };
+
+    document.getElementById("markAllCompletedBtn").addEventListener("click", async () => {
+      const snapshot = await getDocs(query(collection(db, "checkouts")));
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (data.status !== "Completed") {
+          await updateDoc(doc(db, "checkouts", docSnap.id), { status: "Completed" });
+        }
+      }
+      alert("✅ All orders marked as completed.");
+    });
+
+    document.getElementById("markAllResolvedBtn").addEventListener("click", async () => {
+      const snapshot = await getDocs(query(collection(db, "feedbacks")));
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (data.notifyAdmin === true) {
+          await updateDoc(doc(db, "feedbacks", docSnap.id), { notifyAdmin: false });
+        }
+      }
+      alert("✅ All feedback marked as resolved.");
+      loadFeedbacks();
+    });
+  </script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="brand">UNISERVE</div>
+      <nav>
+        <a href="admin.html"><span class="material-icons-outlined">dashboard</span>Dashboard</a>
+        <a href="admininventory.html"><span class="material-icons-outlined">inventory_2</span>Products</a>
+        <a href="orders.html" class="active"><span class="material-icons-outlined">shopping_cart</span>Orders</a>
+        <a href="users.html"><span class="material-icons-outlined">people</span>Users</a>
+        <a href="restock.html"><span class="material-icons-outlined">local_shipping</span>Restock</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <div class="tabs">
+        <div class="tab" id="orders-tab" onclick="switchTab('orders')">🛒 Orders</div>
+        <div class="tab" id="feedback-tab" onclick="switchTab('feedback')">
+          📝 Feedback <span id="feedback-badge" style="display:none; background:red; color:white; border-radius:12px; padding:2px 8px; font-size:12px; margin-left:6px;">0</span>
+        </div>
+      </div>
+      <section class="section" id="orders-section">
+        <h2>📦 Student Orders</h2>
+        <button id="markAllCompletedBtn" class="mark-btn">✅ Mark All as Completed</button>
+        <input type="text" id="orderSearch" placeholder="Search by receipt ID or name...">
+        <div id="orders-list"></div>
+      </section>
+      <section class="section" id="feedback-section">
+        <h2>📬 Student Feedback</h2>
+        <button id="markAllResolvedBtn" class="resolve-btn">✅ Mark All as Resolved</button>
+        <div id="feedbackList">Loading feedback...</div>
+      </section>
+    </main>
+  </div>
+  <audio id="newOrderSound" src="notification.mp3" preload="auto"></audio>
+</body>
+</html>

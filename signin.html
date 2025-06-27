@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account</title>
+  <link rel="stylesheet" href="signin.css" />
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <main>
+    <form id="signupForm">
+      <h1>Student Sign Up</h1>
+
+      <div class="first">
+        <label for="first">First Name</label>
+        <input type="text" id="firstName" required>
+      </div>
+
+      <div class="middle">
+        <label for="middle">Middle Name</label>
+        <input type="text" id="middleName">
+      </div>
+
+      <div class="last">
+        <label for="last">Last Name</label>
+        <input type="text" id="lastName" required>
+      </div>
+
+      <div class="course" id="courseDiv">
+        <label for="course">Course</label>
+        <input type="text" id="course" required>
+      </div>
+
+      <div class="email">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" required>
+      </div>
+
+      <div class="pass">
+        <label for="password">Password</label>
+        <input type="password" id="password" required>
+      </div>
+
+      <div class="btn">
+        <button type="submit">Submit</button>
+      </div>
+
+      <div class="acc">
+        <a href="index.html">Already have an Account.</a>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    async function generateUniqueStudentId() {
+      const counterRef = db.collection("counters").doc("student");
+      return await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(counterRef);
+        let count = 1;
+        if (doc.exists) {
+          count = doc.data().count + 1;
+        }
+        const padded = String(count).padStart(6, "100");
+        const id = "STD-" + padded;
+        transaction.set(counterRef, { count: count });
+        return id;
+      });
+    }
+
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const firstName = document.getElementById("firstName").value.trim();
+      const middleName = document.getElementById("middleName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const course = document.getElementById("course").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const studentId = await generateUniqueStudentId();
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+
+        const userData = {
+          first_name: firstName,
+          middle_name: middleName,
+          last_name: lastName,
+          course: course,
+          email: email,
+          role: "student",
+          student_id: studentId,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          displayId: studentId
+        };
+
+        await db.collection("users").doc(email).set(userData);
+
+        alert(`Account created! Your Student ID: ${studentId}`);
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Signup failed:", error);
+        alert("Signup failed: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html> 
