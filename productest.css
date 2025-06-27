@@ -1,0 +1,53 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+  background-color: #f8f9fa;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+#product-list {
+  max-width: 600px;
+  margin: auto;
+}
+
+.product-card {
+  background: #fff;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.low-stock {
+  color: red;
+  font-weight: bold;
+}
+
+button {
+  padding: 8px 12px;
+  margin-left: 0.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.email-btn {
+  background-color: orange;
+  color: white;
+}
+
+.restock-btn {
+  background-color: green;
+  color: white;
+}

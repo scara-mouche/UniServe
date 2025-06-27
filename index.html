@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EARIST UniServe Portal - Login</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <main>
+    <form id="loginForm">
+      <h1>UNISERVE PORTAL LOGIN</h1>
+
+      <div>
+        <select name="role" id="role" required> 
+          <option value="" disabled selected>Select Role</option>
+          <option value="admin">Admin</option>
+          <option value="student">Student</option>
+        </select>
+      </div>
+
+      <div class="user">
+        <input type="text" id="userId" name="user_id" placeholder="Admin or Student ID" required>
+      </div>
+
+      <div class="pass">
+        <input type="password" id="password" name="password" placeholder="Password" required minlength="8" maxlength="8">
+      </div>
+
+      <div class="btn">
+        <button type="submit">Login</button>
+      </div>
+    </form>
+
+    <div class="create">
+      <a href="signin.html"><button>Create Account</button></a>
+      <div class="forgot"><a href="forgot-password.html">Forgot Password</a></div>
+    </div>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const loginForm = document.getElementById("loginForm");
+
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const role = document.getElementById("role").value;
+      const userId = document.getElementById("userId").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!role || !userId || !password) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      try {
+        // 🔍 Determine field name to search by
+        const idField = role === "admin" ? "admin_id" : "student_id";
+
+        // 🔍 Search Firestore where admin_id or student_id == userId
+        const querySnapshot = await db.collection("users")
+          .where(idField, "==", userId)
+          .limit(1)
+          .get();
+
+        if (querySnapshot.empty) {
+          alert("User ID not found.");
+          return;
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const user = userDoc.data();
+
+        if (user.role !== role) {
+          alert("Role mismatch.");
+          return;
+        }
+
+        const email = user.email;
+
+        await auth.signInWithEmailAndPassword(email, password);
+
+        // ✅ Redirect
+        if (role === "admin") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "student.html";
+        }
+
+      } catch (error) {
+        console.error("Login error:", error);
+        alert("Login failed: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>

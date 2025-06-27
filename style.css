@@ -1,0 +1,62 @@
+* {
+    padding: 0%;
+    margin: 0%;
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+    
+    background-image: url(uniserve.jpg);
+    background-position: center;
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+h1{
+    color: darkred;
+    font-variant: small-caps;
+}
+
+main {
+    text-align: center;
+    margin-top: 17%;
+}
+
+h1 {
+    margin-bottom: 5px;
+}
+div {
+    margin-bottom: 4px;
+}
+
+input {
+    width: 13%;
+    height: 27px;
+    border-radius: 4px;
+}
+
+button {
+    width: 13%;
+    height: 27px;
+    background: darkred;
+    cursor: pointer;
+    color: white;
+    border-radius: 4px;
+}
+
+button:hover{
+background-color: red;
+}
+
+a{
+    
+    color: darkred;
+    cursor: pointer;
+}
+
+a:hover {
+    color: red;
+}
+
