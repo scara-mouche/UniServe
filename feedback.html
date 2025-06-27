@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UniServe Feedback</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #fff5f5;
+      color: #333;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff0f0;
+      border: 2px solid #990000;
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #990000;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #990000;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 2rem;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .satisfied-btn {
+      background-color: #990000;
+      color: white;
+    }
+
+    .satisfied-btn:hover {
+      background-color: #b30000;
+    }
+
+    .change-btn {
+      background-color: #fff;
+      color: #990000;
+      border: 2px solid #990000;
+    }
+
+    .change-btn:hover {
+      background-color: #ffe5e5;
+    }
+
+    .success, .error {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <h2>📢 UniServe Feedback</h2>
+
+    <label for="receiptId">Receipt ID:</label>
+    <input type="text" id="receiptId" readonly required>
+
+    <div class="buttons">
+      <button class="satisfied-btn" id="satisfiedBtn">✅ I am Satisfied</button>
+      <button class="change-btn" id="changeBtn">🔁 Request Change</button>
+    </div>
+
+    <p id="message" class="success" style="display: none;"></p>
+    <p id="error" class="error" style="display: none;"></p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      databaseURL: "https://uniserve-d990a-default-rtdb.firebaseio.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const receiptId = new URLSearchParams(window.location.search).get("receiptId");
+    document.getElementById("receiptId").value = receiptId || "";
+
+    let studentId = "";
+    let studentName = "";
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (!userDoc.exists) {
+        document.getElementById("error").textContent = "⚠️ Student profile not found.";
+        document.getElementById("error").style.display = "block";
+        return;
+      }
+
+      studentId = userDoc.data().student_id || "Unknown";
+      studentName = userDoc.data().name || "Anonymous";
+    });
+
+    document.getElementById("satisfiedBtn").addEventListener("click", async () => {
+      try {
+        await db.collection("feedbacks").add({
+          receiptId,
+          studentId,
+          studentName,
+          feedbackType: "Satisfied",
+          notifyAdmin: false,
+          date: firebase.firestore.Timestamp.now()
+        });
+
+        window.location.href = "student.html";
+      } catch (err) {
+        document.getElementById("error").textContent = "❌ Failed to submit. Try again.";
+        document.getElementById("error").style.display = "block";
+      }
+    });
+
+    document.getElementById("changeBtn").addEventListener("click", async () => {
+      try {
+        await db.collection("feedbacks").add({
+          receiptId,
+          studentId,
+          studentName,
+          feedbackType: "Change Item",
+          notifyAdmin: true,
+          date: firebase.firestore.Timestamp.now()
+        });
+
+        document.getElementById("message").textContent = "🔔 Admin notified about your request.";
+        document.getElementById("message").style.display = "block";
+
+        setTimeout(() => {
+          window.location.href = "student.html";
+        }, 1500);
+      } catch (err) {
+        document.getElementById("error").textContent = "❌ Failed to notify admin.";
+        document.getElementById("error").style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
