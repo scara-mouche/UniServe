@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Restock Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="restock-admin.css">
+</head>
+<body>
+  <a href="admin.html">🏠 Back</a>
+  <h1>📋 Pending Restock Requests</h1>
+  <div id="req-list"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function fetchRequests() {
+      db.collection("restockRequests")
+        .where("status", "==", "Pending")
+        .orderBy("requestDate", "desc")
+        .onSnapshot(snap => {
+          const list = document.getElementById("req-list");
+          list.innerHTML = "";
+          snap.forEach(doc => {
+            const { itemName, itemId, size, requestedQty } = doc.data();
+            const div = document.createElement("div");
+            div.className = "request-card";
+            div.innerHTML = `
+              <h3>${itemName} (${size})</h3>
+              <p><strong>ID:</strong> ${itemId}</p>
+              <p><strong>Qty:</strong> ${requestedQty}</p>
+              <button data-id="${doc.id}" data-item="${itemId}" data-size="${size}" data-qty="${requestedQty}">📥 Mark as Received</button>
+            `;
+            list.appendChild(div);
+          });
+        });
+    }
+
+    async function markReceived(reqId, itemId, size, addQty, btn) {
+      try {
+        const prodRef = db.collection("products").doc(itemId);
+        const prodSnap = await prodRef.get();
+        if (!prodSnap.exists) return alert("❌ Product not found.");
+
+        const prod = prodSnap.data();
+        prod.sizes = prod.sizes || {};
+        prod.sizes[size] = prod.sizes[size] || { stock: 0 };
+        const current = prod.sizes[size].stock || 0;
+
+        await prodRef.update({ [`sizes.${size}.stock`]: current + addQty });
+
+        await db.collection("restockRequests").doc(reqId).update({
+          status: "Received",
+          receivedQty: addQty
+        });
+
+        btn.textContent = "✅ Received";
+        btn.disabled = true;
+
+      } catch (err) {
+        console.error(err);
+        alert("⚠️ Error updating stock.");
+      }
+    }
+
+    document.getElementById("req-list").addEventListener("click", e => {
+      if (e.target.tagName === "BUTTON") {
+        const { id, item, size, qty } = e.target.dataset;
+        markReceived(id, item, size, parseInt(qty), e.target);
+      }
+    });
+
+    fetchRequests();
+  </script>
+</body>
+</html>

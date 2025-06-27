@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase History</title>
+  <link rel="stylesheet" href="studenthistory.css" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      databaseURL: "https://uniserve-d990a-default-rtdb.firebaseio.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207",
+      measurementId: "G-05ZTEC44D6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+  </script>
+</head>
+<body>
+
+  <!-- Header -->
+  <nav class="navbar">
+    <ul class="nav-links">
+      <li><a href="student.html">Home</a></li>
+      <li><a href="AboutUs.html">About Us</a></li>
+      <li><a href="Contact.html">Contact Us</a></li>
+      <li><a href="studenthistory.html" class="active">History</a></li>
+      <li><a href="studentprofile.html">My Account</a></li>
+      <li><a href="login.html">Logout</a></li>
+    </ul>
+    <div class="history-icon">🧾 <span>Purchase History</span></div>
+  </nav>
+
+  <h1>🧾 My Order History</h1>
+  <div id="order-history"></div>
+
+  <script>
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const userQuery = await db.collection("users").where("email", "==", user.email).get();
+
+        if (userQuery.empty) {
+          document.getElementById("order-history").innerHTML = "<p>⚠️ Student profile not found.</p>";
+          return;
+        }
+
+        const userDoc = userQuery.docs[0];
+        const studentId = userDoc.data().student_id;
+
+        const snapshot = await db.collection("checkouts")
+          .where("studentId", "==", studentId)
+          .orderBy("date", "desc")
+          .get();
+
+        const container = document.getElementById("order-history");
+
+        if (snapshot.empty) {
+          container.innerHTML = "<p>No orders found.</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const order = doc.data();
+          const div = document.createElement("div");
+          div.className = "order-card";
+
+          const formattedDate = order.date?.toDate().toLocaleDateString("en-PH") || "N/A";
+          const pickupDate = order.pickupDate?.toDate().toLocaleDateString("en-PH") || "TBD";
+
+          let itemsHTML = `
+            <table style="width:100%; border-collapse: collapse; margin-top:10px;">
+              <thead>
+                <tr style="background:#f2f2f2;">
+                  <th style="padding: 8px; border: 1px solid #ddd;">Item</th>
+                  <th style="padding: 8px; border: 1px solid #ddd;">Size</th>
+                  <th style="padding: 8px; border: 1px solid #ddd;">Qty</th>
+                  <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
+                  <th style="padding: 8px; border: 1px solid #ddd;">Status</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+          order.items.forEach(item => {
+            itemsHTML += `
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.name}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.size}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.qty}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">₱${item.price * item.qty}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${order.status || "Pending"}</td>
+              </tr>`;
+          });
+
+          itemsHTML += `</tbody></table>`;
+
+          div.innerHTML = `
+            <h3>🧾 Receipt ID: ${order.receiptId}</h3>
+            <p><strong>Checkout Date:</strong> ${formattedDate}</p>
+            <p><strong>Pickup Date:</strong> ${pickupDate}</p>
+            <p><strong>Payment Method:</strong> ${order.paymentMethod || "GCash"}</p>
+            <p><strong>Status:</strong> <span style="color: green;">${order.status || "Processing"}</span></p>
+            <p><strong>Total:</strong> <span style="color:#990000; font-weight:bold;">₱${order.total}</span></p>
+            ${itemsHTML}
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        document.getElementById("order-history").innerHTML = "<p>❌ Failed to load orders.</p>";
+      }
+    });
+  </script>
+</body>
+</html>

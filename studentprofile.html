@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uniserve Account Profile</title>
+  <link rel="stylesheet" href="studentprofile.css">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body style="background: #f2f2f2;">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+    <div class="container">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="student.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="AboutUs.html">About Us</a></li>
+        <li class="nav-item"><a class="nav-link" href="Contact.html">Contact Us</a></li>
+        <li class="nav-item"><a class="nav-link active" href="studentprofile.html">My Account</a></li>
+        <li class="nav-item"><a class="nav-link" href="login.html" onclick="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="profile-container">
+    <div class="profile-header">
+      <h2>👤 Student Profile</h2>
+    </div>
+    <div id="student-info">
+      <p><strong>Student Name:</strong> <span id="studentName">Loading...</span></p>
+      <p><strong>Student ID:</strong> <span id="studentId">Loading...</span></p>
+      <p><strong>Course:</strong> <span id="courseYear">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    </div>
+
+    <hr>
+    <h4 class="mt-4">📦 Recent Orders</h4>
+    <table class="table table-bordered mt-3">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Status</th>
+          <th>Feedback</th>
+        </tr>
+      </thead>
+      <tbody id="recentOrders">
+        <tr><td colspan="5">Loading orders...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmY01W7nrK_SnKCGM4sblWna03KbLDEwU",
+      authDomain: "uniserve-d990a.firebaseapp.com",
+      projectId: "uniserve-d990a",
+      storageBucket: "uniserve-d990a.appspot.com",
+      messagingSenderId: "417274438534",
+      appId: "1:417274438534:web:c7ff020cd9d8d19fd30207"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        const email = user.email;
+        try {
+          const userDoc = await db.collection("users").doc(email).get();
+          const userData = userDoc.data();
+
+          if (userData) {
+            const fullName = `${userData.first_name} ${userData.middle_name || ""} ${userData.last_name}`.trim();
+            document.getElementById("studentName").textContent = fullName;
+            document.getElementById("studentId").textContent = userData.displayId || "N/A";
+            document.getElementById("courseYear").textContent = userData.course || "N/A";
+            document.getElementById("email").textContent = userData.email;
+
+            if (userData.displayId) loadOrders(userData.displayId);
+          } else {
+            alert("User profile not found.");
+          }
+        } catch (err) {
+          console.error("Error fetching profile:", err);
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    async function loadOrders(studentId) {
+      try {
+        const ordersRef = db.collection("orders").where("studentId", "==", studentId).orderBy("date", "desc").limit(3);
+        const snapshot = await ordersRef.get();
+
+        let html = "";
+        snapshot.forEach(doc => {
+          const order = doc.data();
+          html += `
+            <tr>
+              <td>#${doc.id}</td>
+              <td>${order.date}</td>
+              <td>${(order.items || []).join(", ")}</td>
+              <td>${order.status}</td>
+              <td>${order.feedback || "–"}</td>
+            </tr>
+          `;
+        });
+        document.getElementById("recentOrders").innerHTML = html || '<tr><td colspan="5">No recent orders.</td></tr>';
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        document.getElementById("recentOrders").innerHTML = '<tr><td colspan="5">Failed to load orders.</td></tr>';
+      }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+  </script>
+</body>
+</html>
